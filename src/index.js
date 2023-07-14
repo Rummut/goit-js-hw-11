@@ -10,9 +10,7 @@ let page = 1;
 
 buttonEl.classList.add('is-hidden');
 
-
 const getRequest = new PixabiAPI();
-
 
 formEl.addEventListener('submit', onSubmit);
 
@@ -29,7 +27,9 @@ function onSubmit(e) {
   } else {
     async function getImagesInputValue(page) {
       try {
-        const { total, hits, totalHits } = await getRequest.getImagesInput(page);
+        const { total, hits, totalHits } = await getRequest.getImagesInput(
+          page
+        );
         if (total === 0) {
           Notiflix.Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
@@ -54,10 +54,8 @@ function onSubmit(e) {
 buttonEl.addEventListener('click', onLoadMore);
 
 function onLoadMore() {
-
-  
   async function getImagesInputValue() {
-    page += 1
+    page += 1;
     try {
       const { total, hits, totalHits } = await getRequest.getImagesInput(page);
       if (total === 0) {
@@ -69,9 +67,9 @@ function onLoadMore() {
       galleryEl.insertAdjacentHTML('beforeend', markup);
 
       if (Number.parseInt(hits.length) === 0) {
-         buttonEl.classList.add('is-hidden');
-Notiflix.Notify.failure(
-        "We're sorry, but you've reached the end of search results."
+        buttonEl.classList.add('is-hidden');
+        Notiflix.Notify.failure(
+          "We're sorry, but you've reached the end of search results."
         );
       }
     } catch (error) {
@@ -82,4 +80,3 @@ Notiflix.Notify.failure(
   }
   getImagesInputValue();
 }
-
