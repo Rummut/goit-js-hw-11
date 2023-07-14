@@ -1,6 +1,9 @@
 import PixabiAPI from './pixabi_api';
 import { getImagesData } from './images/gallery_images';
 import Notiflix from 'notiflix';
+import SimpleLightbox from 'simplelightbox';
+import SimpleLightbox from 'simplelightbox/dist/simple-lightbox.esm';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const formEl = document.querySelector('#search-form');
 const galleryEl = document.querySelector('.gallery');
@@ -41,6 +44,8 @@ function onSubmit(e) {
         galleryEl.innerHTML = '';
         galleryEl.insertAdjacentHTML('afterbegin', markup);
         buttonEl.classList.remove('is-hidden');
+        let gallery = new SimpleLightbox('.gallery a');
+        gallery.on('show.simplelightbox');
       } catch (error) {
         Notiflix.Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
