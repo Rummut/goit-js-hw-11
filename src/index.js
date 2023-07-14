@@ -1,81 +1,79 @@
 import PixabiAPI from './pixabi_api';
-import Pagination from 'tui-pagination';
-import 'tui-pagination/dist/tui-pagination.css';
 import { getImagesData } from './images/gallery_images';
 import Notiflix from 'notiflix';
 
-
-
 const formEl = document.querySelector('#search-form');
 const galleryEl = document.querySelector('.gallery');
+const buttonEl = document.querySelector('.load-more');
 
-const options = {
-  totalItems: 0,
-  itemsPerPage: 40,
-  visiblePages: 5,
-  page: 1,
-  // centerAlign: false,
-  // firstItemClassName: 'tui-first-child',
-  // lastItemClassName: 'tui-last-child',
-  // template: {
-  //   page: '<a href="#" class="tui-page-btn">{{page}}</a>',
-  //   currentPage: '<strong class="tui-page-btn tui-is-selected">{{page}}</strong>',
-  //   moveButton:
-  //     '<a href="#" class="tui-page-btn tui-{{type}}">' +
-  //       '<span class="tui-ico-{{type}}">{{type}}</span>' +
-  //     '</a>',
-  //   disabledMoveButton:
-  //     '<span class="tui-page-btn tui-is-disabled tui-{{type}}">' +
-  //       '<span class="tui-ico-{{type}}">{{type}}</span>' +
-  //     '</span>',
-  //   moreButton:
-  //     '<a href="#" class="tui-page-btn tui-{{type}}-is-ellip">' +
-  //       '<span class="tui-ico-ellip">...</span>' +
-  //     '</a>'
-  // }
-};
+let page = 1;
 
-const container = document.getElementById('tui-pagination-container');
-const instance = new Pagination(container, options);
+buttonEl.classList.add('is-hidden');
 
-const page = instance.getCurrentPage()
 
 const getRequest = new PixabiAPI();
 
-// async function getImagesAll() {
-//   try {
-//     const { total, hits } = await getRequest.getPhotoAll(1);
-//     const markup = getImagesData(hits);
-
-//     galleryEl.insertAdjacentHTML('afterbegin', markup);
-//   } catch (error) {
-//     Notiflix.Notify.failure(
-//       'Sorry, there are no images matching your search query. Please try again.'
-//     );
-//   }
-// }
-
-// getImagesAll();
 
 formEl.addEventListener('submit', onSubmit);
 
 function onSubmit(e) {
   e.preventDefault();
- 
+
   const inputValue = formEl.elements.searchQuery.value.trim();
   getRequest.query = inputValue;
 
-  if (inputValue === "") {
-   return   Notiflix.Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.')
-  } else { 
+  if (inputValue === '') {
+    return Notiflix.Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.'
+    );
+  } else {
+    async function getImagesInputValue(page) {
+      try {
+        const { total, hits, totalHits } = await getRequest.getImagesInput(page);
+        if (total === 0) {
+          Notiflix.Notify.failure(
+            'Sorry, there are no images matching your search query. Please try again.'
+          );
+          return;
+        }
+        Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+        const markup = getImagesData(hits);
+        galleryEl.innerHTML = '';
+        galleryEl.insertAdjacentHTML('afterbegin', markup);
+        buttonEl.classList.remove('is-hidden');
+      } catch (error) {
+        Notiflix.Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
+      }
+    }
+    getImagesInputValue();
+  }
+}
+
+buttonEl.addEventListener('click', onLoadMore);
+
+function onLoadMore() {
+
+  
   async function getImagesInputValue() {
-    try { 
-      const {total, hits } = await getRequest.getImagesInput(page);
-      instance.reset(total)
+    page += 1
+    try {
+      const { total, hits, totalHits } = await getRequest.getImagesInput(page);
+      if (total === 0) {
+        Notiflix.Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
+      }
       const markup = getImagesData(hits);
-      galleryEl.innerHTML = '';
-      galleryEl.insertAdjacentHTML('afterbegin', markup);
+      galleryEl.insertAdjacentHTML('beforeend', markup);
+
+      if (Number.parseInt(hits.length) === 0) {
+         buttonEl.classList.add('is-hidden');
+Notiflix.Notify.failure(
+        "We're sorry, but you've reached the end of search results."
+        );
+      }
     } catch (error) {
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
@@ -84,20 +82,4 @@ function onSubmit(e) {
   }
   getImagesInputValue();
 }
-}
 
-async function getImagesByPagination(event) {
-  const currentPage = event.page
-  try { 
-      const { hits } = await getRequest.getImagesInput(currentPage);
-      const markup = getImagesData(hits);
-      galleryEl.innerHTML = '';
-      galleryEl.insertAdjacentHTML('afterbegin', markup);
-    } catch (error) {
-      Notiflix.Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.'
-      );
-    }
-}
-
-instance.on('afterMove', getImagesByPagination)
