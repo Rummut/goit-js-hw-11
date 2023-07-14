@@ -1,9 +1,9 @@
-// import SimpleLightbox from "simplelightbox";
-// import SimpleLightbox from "simplelightbox/dist/simple-lightbox.esm";
-// import "simplelightbox/dist/simple-lightbox.min.css";
+import SimpleLightbox from "simplelightbox";
+import SimpleLightbox from "simplelightbox/dist/simple-lightbox.esm";
+import "simplelightbox/dist/simple-lightbox.min.css";
 
-// let gallery = new SimpleLightbox('.gallery a');
-// gallery.on('show.simplelightbox')
+let gallery = new SimpleLightbox('.gallery a');
+gallery.on('show.simplelightbox')
 
 export function getImagesData(images) {
     return images.map(({largeImageURL, webformatURL, tags, likes, views, comments, downloads }) => 

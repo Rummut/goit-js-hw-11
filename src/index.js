@@ -70,7 +70,8 @@ function onLoadMore() {
       }
       const markup = getImagesData(hits);
       galleryEl.insertAdjacentHTML('beforeend', markup);
-
+      let gallery = new SimpleLightbox('.gallery a');
+      gallery.on('show.simplelightbox');
       if (Number.parseInt(hits.length) === 0) {
         buttonEl.classList.add('is-hidden');
         Notiflix.Notify.failure(
