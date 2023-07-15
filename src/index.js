@@ -8,8 +8,10 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const formEl = document.querySelector('#search-form');
 const galleryEl = document.querySelector('.gallery');
 const buttonEl = document.querySelector('.load-more');
+const loadedImages = document.querySelector('.photo-card');
 
 let page = 1;
+let loadedImagesCount = 0;
 
 buttonEl.classList.add('is-hidden');
 
@@ -22,11 +24,11 @@ function onSubmit(e) {
 
   const inputValue = formEl.elements.searchQuery.value.trim();
   getRequest.query = inputValue;
-
   if (inputValue === '') {
-    return Notiflix.Notify.failure(
+    Notiflix.Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
     );
+    return;
   } else {
     async function getImagesInputValue(page) {
       try {
@@ -39,13 +41,27 @@ function onSubmit(e) {
           );
           return;
         }
+        loadedImagesCount = hits.length;
         Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
         const markup = getImagesData(hits);
         galleryEl.innerHTML = '';
         galleryEl.insertAdjacentHTML('afterbegin', markup);
         buttonEl.classList.remove('is-hidden');
-        let gallery = new SimpleLightbox('.gallery a');
-        gallery.on('show.simplelightbox');
+
+        if (Number.parseInt(loadedImagesCount) >= totalHits) {
+          buttonEl.classList.add('is-hidden');
+          setTimeout(() => {
+            Notiflix.Notify.failure(
+              "We're sorry, but you've reached the end of search results."
+            );
+          }, 2000);
+        }
+        
+        function createSimpleBox() {
+          let gallery = new SimpleLightbox('.gallery a');
+          gallery.on('show.simplelightbox');
+        }
+        createSimpleBox()
       } catch (error) {
         Notiflix.Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
@@ -70,9 +86,13 @@ function onLoadMore() {
       }
       const markup = getImagesData(hits);
       galleryEl.insertAdjacentHTML('beforeend', markup);
+
+      loadedImagesCount += hits.length;
+
       let gallery = new SimpleLightbox('.gallery a');
       gallery.on('show.simplelightbox');
-      if (Number.parseInt(hits.length) === 0) {
+
+      if (Number.parseInt(loadedImagesCount) >= totalHits) {
         buttonEl.classList.add('is-hidden');
         Notiflix.Notify.failure(
           "We're sorry, but you've reached the end of search results."
