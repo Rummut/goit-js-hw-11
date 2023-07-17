@@ -8,16 +8,15 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const formEl = document.querySelector('#search-form');
 const galleryEl = document.querySelector('.gallery');
 const buttonEl = document.querySelector('.load-more');
-const loadedImages = document.querySelector('.photo-card');
-
-let page = 1;
-let loadedImagesCount = 0;
-
-buttonEl.classList.add('is-hidden');
 
 const getRequest = new PixabiAPI();
 
+buttonEl.classList.add('is-hidden');
+
+let loadedImagesCount = 0;
+
 formEl.addEventListener('submit', onSubmit);
+buttonEl.addEventListener('click', onLoadMore);
 
 function onSubmit(e) {
   e.preventDefault();
@@ -29,56 +28,64 @@ function onSubmit(e) {
       'Sorry, there are no images matching your search query. Please try again.'
     );
     return;
-  } else {
-    async function getImagesInputValue(page) {
-      try {
-        const { total, hits, totalHits } = await getRequest.getImagesInput(
-          page
-        );
-        if (total === 0) {
-          Notiflix.Notify.failure(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
-          return;
-        }
-        loadedImagesCount = hits.length;
-        Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
-        const markup = getImagesData(hits);
-        galleryEl.innerHTML = '';
-        galleryEl.insertAdjacentHTML('afterbegin', markup);
-        buttonEl.classList.remove('is-hidden');
+  }
+  async function getImagesInputValue() {
+    try {
+      getRequest.resetPage();
 
-        if (Number.parseInt(loadedImagesCount) >= totalHits) {
-          buttonEl.classList.add('is-hidden');
-          setTimeout(() => {
-            Notiflix.Notify.failure(
-              "We're sorry, but you've reached the end of search results."
-            );
-          }, 2000);
-        }
-        
-        function createSimpleBox() {
-          let gallery = new SimpleLightbox('.gallery a');
-          gallery.on('show.simplelightbox');
-        }
-        createSimpleBox()
-      } catch (error) {
+      const { total, hits, totalHits } = await getRequest.getImagesInput();
+      if (total === 0) {
         Notiflix.Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
         );
+        return;
       }
-    }
-    getImagesInputValue();
-  }
-}
 
-buttonEl.addEventListener('click', onLoadMore);
+      loadedImagesCount = hits.length;
+      Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+
+      const markup = getImagesData(hits);
+      galleryEl.innerHTML = '';
+      galleryEl.insertAdjacentHTML('afterbegin', markup);
+      buttonEl.classList.remove('is-hidden');
+
+      const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+      window.scrollBy({
+        top: cardHeight * 0.25,
+        behavior: 'smooth',
+      });
+
+      if (Number.parseInt(loadedImagesCount) >= totalHits) {
+        buttonEl.classList.add('is-hidden');
+        setTimeout(() => {
+          Notiflix.Notify.failure(
+            "We're sorry, but you've reached the end of search results."
+          );
+        }, 2000);
+      }
+
+      function createSimpleBox() {
+        let gallery = new SimpleLightbox('.gallery a');
+        gallery.on('show.simplelightbox');
+      }
+      createSimpleBox();
+    } catch (error) {
+      Notiflix.Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    }
+  }
+  getImagesInputValue();
+}
 
 function onLoadMore() {
   async function getImagesInputValue() {
-    page += 1;
     try {
-      const { total, hits, totalHits } = await getRequest.getImagesInput(page);
+      getRequest.onLoadPage();
+
+      const { total, hits, totalHits } = await getRequest.getImagesInput();
       if (total === 0) {
         Notiflix.Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
@@ -86,6 +93,14 @@ function onLoadMore() {
       }
       const markup = getImagesData(hits);
       galleryEl.insertAdjacentHTML('beforeend', markup);
+
+      const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+      window.scrollBy({
+        top: cardHeight * 1.75,
+        behavior: 'smooth',
+      });
 
       loadedImagesCount += hits.length;
 
