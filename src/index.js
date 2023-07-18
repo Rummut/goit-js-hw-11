@@ -13,7 +13,7 @@ const getRequest = new PixabiAPI();
 
 buttonEl.classList.add('is-hidden');
 
-let loadedImagesCount = 0;
+let loadedImagesCount = null;
 
 formEl.addEventListener('submit', onSubmit);
 buttonEl.addEventListener('click', onLoadMore);
@@ -31,6 +31,7 @@ function onSubmit(e) {
   }
   async function getImagesInputValue() {
     try {
+      let loadedImagesCount = null;
       getRequest.resetPage();
 
       const { total, hits, totalHits } = await getRequest.getImagesInput();
@@ -41,7 +42,9 @@ function onSubmit(e) {
         return;
       }
 
-      loadedImagesCount = hits.length;
+      loadedImagesCount += hits.length;
+
+      console.log(loadedImagesCount);
       Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
 
       const markup = getImagesData(hits);
@@ -49,21 +52,29 @@ function onSubmit(e) {
       galleryEl.insertAdjacentHTML('afterbegin', markup);
       buttonEl.classList.remove('is-hidden');
 
-      const { height: cardHeight } = document
-        .querySelector('.gallery')
-        .firstElementChild.getBoundingClientRect();
-      window.scrollBy({
-        top: cardHeight * 0.25,
-        behavior: 'smooth',
-      });
-
       if (Number.parseInt(loadedImagesCount) >= totalHits) {
         buttonEl.classList.add('is-hidden');
-        setTimeout(() => {
-          Notiflix.Notify.failure(
-            "We're sorry, but you've reached the end of search results."
-          );
-        }, 2000);
+
+        function isScrollAtBottom() {
+          const windowHeight = window.innerHeight;
+          const fullHeight = document.documentElement.scrollHeight;
+          const scrollPosition = window.scrollY;
+          return windowHeight + scrollPosition >= fullHeight;
+        }
+
+        function handleScroll() {
+          if (isScrollAtBottom()) {
+            Notiflix.Notify.failure(
+              "We're sorry, but you've reached the end of search results."
+            );
+          }
+        }
+        window.addEventListener('scroll', handleScroll);
+        // setTimeout(() => {
+        //   Notiflix.Notify.failure(
+        //     "We're sorry, but you've reached the end of search results."
+        //   );
+        // }, 2000);
       }
 
       function createSimpleBox() {
@@ -94,24 +105,33 @@ function onLoadMore() {
       const markup = getImagesData(hits);
       galleryEl.insertAdjacentHTML('beforeend', markup);
 
-      const { height: cardHeight } = document
-        .querySelector('.gallery')
-        .firstElementChild.getBoundingClientRect();
-      window.scrollBy({
-        top: cardHeight * 1.75,
-        behavior: 'smooth',
-      });
+      scrollByHeightCard();
 
       loadedImagesCount += hits.length;
-
+      console.log(loadedImagesCount);
       let gallery = new SimpleLightbox('.gallery a');
       gallery.on('show.simplelightbox');
 
       if (Number.parseInt(loadedImagesCount) >= totalHits) {
         buttonEl.classList.add('is-hidden');
-        Notiflix.Notify.failure(
-          "We're sorry, but you've reached the end of search results."
-        );
+        function isScrollAtBottom() {
+          const windowHeight = window.innerHeight;
+          const fullHeight = document.documentElement.scrollHeight;
+          const scrollPosition = window.scrollY;
+          return windowHeight + scrollPosition >= fullHeight;
+        }
+
+        function handleScroll() {
+          if (isScrollAtBottom()) {
+            Notiflix.Notify.failure(
+              "We're sorry, but you've reached the end of search results."
+            );
+          }
+        }
+        window.addEventListener('scroll', handleScroll);
+        // Notiflix.Notify.failure(
+        //   "We're sorry, but you've reached the end of search results."
+        // );
       }
     } catch (error) {
       Notiflix.Notify.failure(
@@ -120,4 +140,14 @@ function onLoadMore() {
     }
   }
   getImagesInputValue();
+}
+
+function scrollByHeightCard() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+    top: cardHeight * 0.75,
+    behavior: 'smooth',
+  });
 }
